@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Name Vote — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f4ef;
+      --card: #ffffff;
+      --forest: #2d4a3e;
+      --forest-hover: #1a3a2e;
+      --forest-light: #e4ede7;
+      --text: #44403c;
+      --text-dark: #2d2821;
+      --text-muted: #6b645e;
+      --text-label: #7a7268;
+      --border: #e0d8ce;
+      --accent: #d6a87a;
+      --accent-hover: #c89868;
+      --accent-header: #8a6838;
+      --sage: #d8f3dc;
+      --sage-dark: #3d7554;
+      --amber: #fef3c7;
+      --amber-text: #92400e;
+      --focus-ring: #c0820a;
+      --shadow-card: 0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+      --radius: 12px;
+      --font-serif: 'Fraunces', Georgia, serif;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container { max-width: 960px; margin: 0 auto; }
+
+    /* Auth screen */
+    .auth-screen {
+      max-width: 400px;
+      margin: 6rem auto;
+      text-align: center;
+    }
+
+    .auth-screen h1 {
+      font-family: var(--font-serif);
+      font-size: 1.85rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-screen p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .auth-screen input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      background: var(--card);
+      margin-bottom: 0.75rem;
+      transition: border-color 0.2s;
+    }
+
+    .auth-screen input:focus {
+      outline: none;
+      border-color: var(--forest);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.65rem 1.25rem;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--forest);
+      color: #fff;
+      width: 100%;
+      padding: 0.75rem;
+    }
+
+    .btn-primary:hover { background: var(--forest-hover); }
+
+    .btn-sm {
+      padding: 0.4rem 0.85rem;
+      font-size: 0.8rem;
+      border-radius: 6px;
+    }
+
+    .btn-forest { background: var(--forest); color: #fff; }
+    .btn-forest:hover { background: var(--forest-hover); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      background: var(--card);
+      border-color: var(--text-muted);
+    }
+
+    .btn-copied {
+      background: var(--sage) !important;
+      color: var(--sage-dark) !important;
+      border-color: var(--sage-dark) !important;
+    }
+
+    /* Dashboard header */
+    .dash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .dash-header h1 {
+      font-family: var(--font-serif);
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    .dash-actions { display: flex; gap: 0.5rem; }
+
+    /* Sections */
+    .section {
+      margin-bottom: 2.5rem;
+    }
+
+    .section-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-label);
+      margin-bottom: 1rem;
+    }
+
+    /* Invite form */
+    .invite-form {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .invite-form input {
+      flex: 1;
+      padding: 0.6rem 0.85rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      background: var(--card);
+      transition: border-color 0.2s;
+    }
+
+    .invite-form input:focus { outline: none; border-color: var(--forest); }
+
+    .invite-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    /* Voter list */
+    .voter-list {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+    }
+
+    .voter-row {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1.25rem;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .voter-row:last-child { border-bottom: none; }
+
+    .voter-name {
+      font-weight: 600;
+      color: var(--text-dark);
+      min-width: 100px;
+    }
+
+    .voter-status {
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+    }
+
+    .status-voted {
+      background: var(--sage);
+      color: var(--sage-dark);
+    }
+
+    .status-pending {
+      background: var(--amber);
+      color: var(--amber-text);
+    }
+
+    .voter-link {
+      flex: 1;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: monospace;
+    }
+
+    .voter-actions { display: flex; gap: 0.35rem; }
+
+    /* Results grid */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .result-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-card);
+      border: 2px solid transparent;
+      transition: border-color 0.3s;
+    }
+
+    .result-card.leader {
+      border-color: var(--forest);
+    }
+
+    .result-card-name {
+      font-family: var(--font-serif);
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 0.35rem;
+    }
+
+    .leader-badge {
+      display: inline-block;
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: var(--forest-light);
+      color: var(--forest);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .avg-rating {
+      display: flex;
+      align-items: baseline;
+      gap: 0.35rem;
+      margin: 0.75rem 0;
+    }
+
+    .avg-number {
+      font-family: var(--font-serif);
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      line-height: 1;
+    }
+
+    .avg-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .vote-count {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    /* Rating bar */
+    .rating-bar-track {
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+
+    .rating-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    /* Rating distribution */
+    .rating-dist {
+      margin-bottom: 1.25rem;
+    }
+
+    .dist-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 0.25rem;
+      font-size: 0.75rem;
+    }
+
+    .dist-label {
+      width: 14px;
+      text-align: right;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .dist-track {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .dist-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    .dist-count {
+      width: 16px;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+    }
+
+    /* Domain split bar */
+    .domain-split {
+      display: flex;
+      border-radius: 6px;
+      overflow: hidden;
+      height: 32px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .domain-split-seg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      padding: 0 0.5rem;
+      white-space: nowrap;
+      overflow: hidden;
+      transition: flex 0.4s;
+    }
+
+    .domain-split-seg:first-child {
+      background: var(--forest-light);
+      color: var(--forest);
+    }
+
+    .domain-split-seg:last-child {
+      background: var(--amber);
+      color: var(--amber-text);
+    }
+
+    .domain-split-seg .pct {
+      font-weight: 700;
+    }
+
+    /* No votes yet */
+    .no-data {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    /* Individual votes table */
+    .votes-table-wrap {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      overflow-x: auto;
+    }
+
+    .votes-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .votes-table th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      color: var(--text-label);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .votes-table td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .votes-table tr:last-child td { border-bottom: none; }
+
+    .cell-rating {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .cell-domain {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .cell-comment {
+      font-style: italic;
+      color: var(--text-muted);
+      max-width: 200px;
+    }
+
+    /* Rating color scale */
+    .r1 { color: #c07a60; }
+    .r2 { color: #b08860; }
+    .r3 { color: var(--text-muted); }
+    .r4 { color: var(--sage-dark); }
+    .r5 { color: var(--forest); }
+
+    /* Empty state */
+    .empty-voters {
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .results-grid { grid-template-columns: 1fr; }
+      .voter-link { display: none; }
+      .dash-header { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+      .invite-form { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="app"></div>
+
+  <script>
+    const BRAND_META = {
+      'make-math-mine': { name: 'Make Math Mine', domains: ['makemathmine.com', 'makemathmine.ai'] },
+      'volta': { name: 'Volta', domains: ['myvolta.ai', 'volta.vip'] },
+      'counted': { name: 'Counted', domains: ['becounted.ai', 'counted.vip'] }
+    };
+    const BRAND_ORDER = ['make-math-mine', 'volta', 'counted'];
+
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let voters = [];
+    let votes = [];
+
+    // Token generator (no ambiguous chars: 0/O/l/1/I)
+    function generateToken() {
+      const chars = 'abcdefghijkmnpqrstuvwxyz23456789';
+      let t = '';
+      for (let i = 0; i < 8; i++) t += chars[Math.floor(Math.random() * chars.length)];
+      return t;
+    }
+
+    function inviteLink(token) {
+      return `${VOTE_BASE_URL}/?v=${token}`;
+    }
+
+    // --- Init ---
+    showDashboard();
+
+    // --- Dashboard ---
+    function showDashboard() {
+      document.getElementById('app').innerHTML = `
+        <div class="dash-header">
+          <h1>Name Vote</h1>
+          <div class="dash-actions">
+            <button class="btn btn-sm btn-outline" onclick="loadData()">Refresh</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Create Invites</div>
+          <div class="invite-form">
+            <input type="text" id="voter-name" placeholder="Name (comma-separated for multiple)">
+            <button class="btn btn-sm btn-forest" id="create-btn">Create</button>
+          </div>
+          <div class="invite-hint">e.g. Mom, Dave, Thuan</div>
+        </div>
+
+        <div class="section" id="voters-section"></div>
+        <div class="section" id="results-section"></div>
+        <div class="section" id="votes-section"></div>
+      `;
+
+      document.getElementById('create-btn').addEventListener('click', handleCreateVoters);
+      document.getElementById('voter-name').addEventListener('keydown', e => {
+        if (e.key === 'Enter') handleCreateVoters();
+      });
+
+      loadData();
+    }
+
+    async function loadData() {
+      const [voterRes, voteRes] = await Promise.all([
+        db.from('voters').select('*').order('created_at'),
+        db.from('votes').select('*').order('created_at')
+      ]);
+      if (voterRes.error) { alert('Error: ' + voterRes.error.message); return; }
+      voters = voterRes.data || [];
+      votes = voteRes.data || [];
+      renderAll();
+    }
+
+    async function handleCreateVoters() {
+      const input = document.getElementById('voter-name').value.trim();
+      if (!input) return;
+
+      const names = input.split(/[,\n]/).map(n => n.trim()).filter(Boolean);
+      const rows = names.map(name => ({ name, token: generateToken() }));
+
+      const { error } = await db.from('voters').insert(rows);
+      if (error) { alert('Error: ' + error.message); return; }
+
+      document.getElementById('voter-name').value = '';
+      await loadData();
+    }
+
+    function renderAll() {
+      renderVoters();
+      renderResults();
+      renderIndividualVotes();
+    }
+
+    // --- Voter List ---
+    function renderVoters() {
+      const section = document.getElementById('voters-section');
+
+      if (voters.length === 0) {
+        section.innerHTML = `
+          <div class="section-label">Invites</div>
+          <div class="voter-list"><div class="empty-voters">No voters yet. Create some invites above.</div></div>
+        `;
+        return;
+      }
+
+      const votedCount = voters.filter(v => v.voted_at).length;
+
+      section.innerHTML = `
+        <div class="section-label">Invites &mdash; ${votedCount} of ${voters.length} voted</div>
+        <div class="voter-list">
+          ${voters.map(v => {
+            const status = v.voted_at
+              ? `<span class="voter-status status-voted">Voted</span>`
+              : `<span class="voter-status status-pending">Pending</span>`;
+            const link = inviteLink(v.token);
+            return `
+              <div class="voter-row">
+                <span class="voter-name">${esc(v.name)}</span>
+                ${status}
+                <span class="voter-link">${link}</span>
+                <div class="voter-actions">
+                  <button class="btn btn-sm btn-outline" onclick="copyLink('${v.token}', this)">Copy link</button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    async function copyLink(token, btn) {
+      const link = inviteLink(token);
+      try {
+        await navigator.clipboard.writeText(link);
+        btn.textContent = 'Copied!';
+        btn.classList.add('btn-copied');
+        setTimeout(() => { btn.textContent = 'Copy link'; btn.classList.remove('btn-copied'); }, 2000);
+      } catch {
+        prompt('Copy this link:', link);
+      }
+    }
+
+    // --- Results ---
+    function computeResults() {
+      return BRAND_ORDER.map(brandId => {
+        const meta = BRAND_META[brandId];
+        const brandVotes = votes.filter(v => v.brand === brandId);
+        const ratings = brandVotes.map(v => v.rating);
+        const avg = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
+
+        const ratingDist = {};
+        for (let i = 1; i <= 5; i++) ratingDist[i] = ratings.filter(r => r === i).length;
+
+        const domainCounts = {};
+        meta.domains.forEach(d => domainCounts[d] = 0);
+        brandVotes.forEach(v => { if (domainCounts[v.preferred_domain] !== undefined) domainCounts[v.preferred_domain]++; });
+
+        return { id: brandId, name: meta.name, domains: meta.domains, avg, count: ratings.length, ratingDist, domainCounts };
+      });
+    }
+
+    function renderResults() {
+      const section = document.getElementById('results-section');
+      const votedVoters = voters.filter(v => v.voted_at);
+
+      if (votedVoters.length === 0) {
+        section.innerHTML = '';
+        return;
+      }
+
+      const results = computeResults();
+      const maxAvg = Math.max(...results.map(r => r.avg));
+
+      section.innerHTML = `
+        <div class="section-label">Results</div>
+        <div class="results-grid">
+          ${results.map(r => {
+            const isLeader = r.avg === maxAvg && r.avg > 0;
+            const pct = r.avg ? ((r.avg / 5) * 100).toFixed(0) : 0;
+            const totalDomain = Object.values(r.domainCounts).reduce((a, b) => a + b, 0);
+
+            return `
+              <div class="result-card ${isLeader ? 'leader' : ''}">
+                <div class="result-card-name">
+                  ${r.name}${isLeader ? '<span class="leader-badge">Leading</span>' : ''}
+                </div>
+
+                <div class="avg-rating">
+                  <span class="avg-number">${r.avg ? r.avg.toFixed(1) : '\u2014'}</span>
+                  <span class="avg-label">/ 5</span>
+                </div>
+                <div class="vote-count">${r.count} vote${r.count !== 1 ? 's' : ''}</div>
+
+                <div class="rating-bar-track">
+                  <div class="rating-bar-fill" style="width: ${pct}%"></div>
+                </div>
+
+                <div class="rating-dist">
+                  ${[5,4,3,2,1].map(n => {
+                    const count = r.ratingDist[n] || 0;
+                    const w = r.count ? ((count / r.count) * 100).toFixed(0) : 0;
+                    return `
+                      <div class="dist-row">
+                        <span class="dist-label">${n}</span>
+                        <div class="dist-track"><div class="dist-fill" style="width: ${w}%"></div></div>
+                        <span class="dist-count">${count}</span>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+
+                ${totalDomain > 0 ? `
+                  <div class="domain-split">
+                    ${r.domains.map((d, i) => {
+                      const c = r.domainCounts[d] || 0;
+                      const dp = totalDomain ? ((c / totalDomain) * 100).toFixed(0) : 50;
+                      return `<div class="domain-split-seg" style="flex: ${Math.max(c, 0.5)}">
+                        <span>${shortDomain(d)}</span>
+                        <span class="pct">${dp}%</span>
+                      </div>`;
+                    }).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function shortDomain(d) {
+      return d.length > 16 ? d.replace(/^(www\.)?/, '').split('.').pop() === 'com' ? '.com' : '.' + d.split('.').pop() : d;
+    }
+
+    // --- Individual Votes Table ---
+    function renderIndividualVotes() {
+      const section = document.getElementById('votes-section');
+      const votedVoters = voters.filter(v => v.voted_at);
+
+      if (votedVoters.length === 0) {
+        section.innerHTML = '';
+        return;
+      }
+
+      // Build voter map
+      const voterMap = {};
+      voters.forEach(v => voterMap[v.id] = v);
+
+      // Group votes by voter
+      const votesByVoter = {};
+      votes.forEach(v => {
+        if (!votesByVoter[v.voter_id]) votesByVoter[v.voter_id] = {};
+        votesByVoter[v.voter_id][v.brand] = v;
+      });
+
+      section.innerHTML = `
+        <div class="section-label">Individual Votes</div>
+        <div class="votes-table-wrap">
+          <table class="votes-table">
+            <thead>
+              <tr>
+                <th>Voter</th>
+                ${BRAND_ORDER.map(b => `<th>${BRAND_META[b].name}</th>`).join('')}
+                <th>Comment</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${votedVoters.map(voter => {
+                const vb = votesByVoter[voter.id] || {};
+                return `
+                  <tr>
+                    <td><strong>${esc(voter.name)}</strong></td>
+                    ${BRAND_ORDER.map(brandId => {
+                      const v = vb[brandId];
+                      if (!v) return '<td>\u2014</td>';
+                      return `
+                        <td>
+                          <div class="cell-rating r${v.rating}">${v.rating}</div>
+                          <div class="cell-domain">${v.preferred_domain}</div>
+                        </td>
+                      `;
+                    }).join('')}
+                    <td class="cell-comment">${voter.comment ? esc(voter.comment) : '\u2014'}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // --- Utilities ---
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+  </script>
+</body>
+</html>

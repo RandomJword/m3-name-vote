@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Help Us Choose a Name</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f4ef;
+      --card: #ffffff;
+      --forest: #2d4a3e;
+      --forest-hover: #1a3a2e;
+      --text: #44403c;
+      --text-dark: #2d2821;
+      --text-muted: #6b645e;
+      --text-label: #7a7268;
+      --border: #e0d8ce;
+      --accent: #d6a87a;
+      --accent-hover: #c89868;
+      --accent-header: #8a6838;
+      --sage: #d8f3dc;
+      --sage-dark: #3d7554;
+      --focus-ring: #c0820a;
+      --shadow-card: 0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+      --radius: 12px;
+      --radius-lg: 20px;
+      --font-serif: 'Fraunces', Georgia, serif;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 580px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .voter-greeting {
+      font-size: 0.9rem;
+      color: var(--accent-header);
+      font-weight: 500;
+      margin-bottom: 0.35rem;
+    }
+
+    .header h1 {
+      font-family: var(--font-serif);
+      font-size: 1.85rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+      font-optical-sizing: auto;
+    }
+
+    .header p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    /* Section labels */
+    .section-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-label);
+      margin-bottom: 1rem;
+    }
+
+    /* Brand cards */
+    .brand-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 0.85rem;
+      box-shadow: var(--shadow-card);
+      border: 2px solid transparent;
+      transition: border-color 0.3s;
+    }
+
+    .brand-card.rated {
+      border-color: var(--border);
+    }
+
+    .brand-name {
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 0.85rem;
+      font-optical-sizing: auto;
+    }
+
+    /* Stars */
+    .stars {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .star {
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      color: var(--border);
+      transition: color 0.15s, transform 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    @media (hover: hover) {
+      .star:hover { transform: scale(1.12); }
+    }
+
+    .star.active { color: var(--accent); }
+    .star.hover-preview { color: var(--accent-hover); opacity: 0.65; }
+
+    .rating-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+      min-height: 1.3em;
+      transition: opacity 0.2s;
+    }
+
+    /* Domain section */
+    .domain-section {
+      margin-top: 2rem;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      pointer-events: none;
+    }
+
+    .domain-section.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .domain-group {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 0.85rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    .domain-group-label {
+      font-family: var(--font-serif);
+      font-weight: 500;
+      font-size: 1rem;
+      color: var(--text-dark);
+      margin-bottom: 0.75rem;
+    }
+
+    .domain-options {
+      display: flex;
+      gap: 0.65rem;
+    }
+
+    .domain-option {
+      flex: 1;
+      padding: 0.7rem 0.75rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+      background: var(--card);
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    @media (hover: hover) {
+      .domain-option:hover {
+        border-color: var(--forest);
+        background: #edf3ef;
+      }
+    }
+
+    .domain-option.selected {
+      border-color: var(--forest);
+      background: #e4ede7;
+      color: var(--forest);
+      font-weight: 600;
+    }
+
+    .domain-option:focus-visible {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+
+    /* Comment */
+    .comment-section {
+      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      color: var(--text);
+      background: var(--card);
+      resize: vertical;
+      min-height: 80px;
+      transition: border-color 0.3s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--forest);
+    }
+
+    textarea::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    /* Submit */
+    .submit-btn {
+      width: 100%;
+      padding: 1rem;
+      background: var(--forest);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-sans);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-bottom: 2rem;
+    }
+
+    .submit-btn:hover { background: var(--forest-hover); }
+    .submit-btn:active { transform: scale(0.985); }
+
+    .submit-btn:disabled {
+      background: var(--border);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .submit-btn:focus-visible {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+
+    /* State screens */
+    .state-screen {
+      text-align: center;
+      padding: 5rem 1rem;
+    }
+
+    .state-screen h2 {
+      font-family: var(--font-serif);
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .state-screen p {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .state-icon {
+      width: 56px;
+      height: 56px;
+      margin-bottom: 1rem;
+    }
+
+    .state-icon.check { color: var(--sage-dark); }
+    .state-icon.warn { color: var(--accent); }
+
+    /* Loading */
+    .loading-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 5rem 0;
+    }
+
+    .loading-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    .loading-dot:nth-child(2) { animation-delay: 0.15s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes pulse {
+      0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Step indicator */
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    .step-dot.active {
+      background: var(--forest);
+      transform: scale(1.25);
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      body { padding: 1.25rem 0.85rem; }
+      .header h1 { font-size: 1.5rem; }
+      .brand-name { font-size: 1.2rem; }
+      .star { width: 40px; height: 40px; }
+      .domain-options { flex-direction: column; gap: 0.5rem; }
+      .domain-option { padding: 0.85rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="app">
+    <div class="loading-dots">
+      <span class="loading-dot"></span>
+      <span class="loading-dot"></span>
+      <span class="loading-dot"></span>
+    </div>
+  </div>
+
+  <script>
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const BRANDS = [
+      { id: 'make-math-mine', name: 'Make Math Mine', domains: ['makemathmine.com', 'makemathmine.ai'] },
+      { id: 'volta', name: 'Volta', domains: ['myvolta.ai', 'volta.vip'] },
+      { id: 'counted', name: 'Counted', domains: ['becounted.ai', 'counted.vip'] }
+    ];
+
+    const RATING_LABELS = {
+      1: "Doesn\u2019t work for me",
+      2: 'Not great',
+      3: "It\u2019s fine",
+      4: 'I like it',
+      5: 'Love it'
+    };
+
+    const state = { voter: null, ratings: {}, domains: {}, order: [] };
+    const supportsHover = window.matchMedia('(hover: hover)').matches;
+
+    // Fisher-Yates shuffle
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // Randomize domain order within each brand too
+    function randomizeDomains(brands) {
+      return brands.map(b => ({
+        ...b,
+        domains: Math.random() > 0.5 ? [...b.domains] : [...b.domains].reverse()
+      }));
+    }
+
+    const STAR_PATH = 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z';
+    const token = new URLSearchParams(location.search).get('v');
+
+    async function init() {
+      if (!token) {
+        showState('warn', 'You need an invite link', "Ask JD for yours and you\u2019ll be all set.");
+        return;
+      }
+
+      try {
+        const { data, error } = await db.rpc('get_voter', { voter_token: token });
+
+        if (error || !data) {
+          showState('warn', "This link doesn\u2019t look right", 'Double-check the link or ask JD for a new one.');
+          return;
+        }
+
+        if (data.voted_at) {
+          showState('check', `Thanks, ${data.name}!`, "You\u2019ve already submitted your picks.");
+          return;
+        }
+
+        state.voter = data;
+        state.order = randomizeDomains(shuffle(BRANDS));
+        renderVoting();
+      } catch (e) {
+        showState('warn', 'Something went wrong', 'Try refreshing the page.');
+      }
+    }
+
+    function showState(icon, title, subtitle) {
+      const icons = {
+        check: `<svg class="state-icon check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+        warn: `<svg class="state-icon warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+      };
+
+      document.getElementById('app').innerHTML = `
+        <div class="state-screen">
+          ${icons[icon] || ''}
+          <h2>${title}</h2>
+          <p>${subtitle}</p>
+        </div>
+      `;
+    }
+
+    function renderVoting() {
+      document.getElementById('app').innerHTML = `
+        <div class="header">
+          <div class="voter-greeting">Hi, ${state.voter.name}</div>
+          <h1>Help us choose a name</h1>
+          <p>We\u2019re picking a name for a math learning platform. Rate each option \u2014 your gut reaction matters most.</p>
+        </div>
+
+        <div class="step-indicator">
+          <div class="step-dot active" id="step-1"></div>
+          <div class="step-dot" id="step-2"></div>
+        </div>
+
+        <div class="section-label">Rate each name</div>
+        <div id="brands"></div>
+
+        <div class="domain-section" id="domains-section">
+          <div class="section-label">Pick your preferred domain for each</div>
+          <div id="domains"></div>
+
+          <div class="comment-section">
+            <div class="section-label">Any thoughts? (optional)</div>
+            <textarea id="comment" placeholder="First impressions, associations, anything that came to mind\u2026"></textarea>
+          </div>
+
+          <button class="submit-btn" id="submit-btn" disabled>Submit your picks</button>
+        </div>
+      `;
+
+      renderBrandCards();
+      renderDomainGroups();
+
+      document.getElementById('submit-btn').addEventListener('click', handleSubmit);
+    }
+
+    function renderBrandCards() {
+      const container = document.getElementById('brands');
+      container.innerHTML = state.order.map(brand => `
+        <div class="brand-card" id="card-${brand.id}">
+          <div class="brand-name">${brand.name}</div>
+          <div class="stars" data-brand="${brand.id}">
+            ${[1,2,3,4,5].map(n => `
+              <svg class="star" data-brand="${brand.id}" data-value="${n}" viewBox="0 0 24 24" fill="currentColor" role="button" aria-label="Rate ${n} out of 5">
+                <path d="${STAR_PATH}"/>
+              </svg>
+            `).join('')}
+          </div>
+          <div class="rating-label" id="label-${brand.id}"></div>
+        </div>
+      `).join('');
+
+      // Star click
+      container.querySelectorAll('.star').forEach(star => {
+        star.addEventListener('click', () => {
+          const brandId = star.dataset.brand;
+          const value = parseInt(star.dataset.value);
+          state.ratings[brandId] = value;
+          updateStarDisplay(brandId, value);
+          document.getElementById(`card-${brandId}`).classList.add('rated');
+          document.getElementById(`label-${brandId}`).textContent = RATING_LABELS[value];
+          checkAllRated();
+        });
+
+        // Hover preview (desktop only)
+        if (supportsHover) {
+          star.addEventListener('mouseenter', () => {
+            previewStars(star.dataset.brand, parseInt(star.dataset.value));
+          });
+          star.addEventListener('mouseleave', () => {
+            updateStarDisplay(star.dataset.brand, state.ratings[star.dataset.brand] || 0);
+          });
+        }
+      });
+    }
+
+    function updateStarDisplay(brandId, value) {
+      document.querySelectorAll(`.star[data-brand="${brandId}"]`).forEach(s => {
+        const v = parseInt(s.dataset.value);
+        s.classList.toggle('active', v <= value);
+        s.classList.remove('hover-preview');
+      });
+    }
+
+    function previewStars(brandId, value) {
+      document.querySelectorAll(`.star[data-brand="${brandId}"]`).forEach(s => {
+        const v = parseInt(s.dataset.value);
+        if (!s.classList.contains('active')) {
+          s.classList.toggle('hover-preview', v <= value);
+        }
+      });
+    }
+
+    function renderDomainGroups() {
+      document.getElementById('domains').innerHTML = state.order.map(brand => `
+        <div class="domain-group">
+          <div class="domain-group-label">${brand.name}</div>
+          <div class="domain-options">
+            ${brand.domains.map(d => `
+              <div class="domain-option" tabindex="0" role="button"
+                   data-brand="${brand.id}" data-domain="${d}">${d}</div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      // Domain click + keyboard
+      document.querySelectorAll('.domain-option').forEach(opt => {
+        function select() {
+          const brandId = opt.dataset.brand;
+          opt.parentElement.querySelectorAll('.domain-option').forEach(o => o.classList.remove('selected'));
+          opt.classList.add('selected');
+          state.domains[brandId] = opt.dataset.domain;
+          checkCanSubmit();
+        }
+        opt.addEventListener('click', select);
+        opt.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); }
+        });
+      });
+    }
+
+    function checkAllRated() {
+      if (Object.keys(state.ratings).length === BRANDS.length) {
+        const section = document.getElementById('domains-section');
+        section.classList.add('visible');
+        document.getElementById('step-2').classList.add('active');
+        setTimeout(() => {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+      }
+    }
+
+    function checkCanSubmit() {
+      const allDomains = Object.keys(state.domains).length === BRANDS.length;
+      document.getElementById('submit-btn').disabled = !allDomains;
+    }
+
+    async function handleSubmit() {
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting\u2026';
+
+      const voteData = BRANDS.map(b => ({
+        brand: b.id,
+        rating: state.ratings[b.id],
+        preferred_domain: state.domains[b.id]
+      }));
+
+      const comment = document.getElementById('comment').value.trim() || null;
+
+      try {
+        const { data, error } = await db.rpc('submit_vote', {
+          voter_token: token,
+          vote_data: voteData,
+          voter_comment: comment
+        });
+
+        if (error || !data?.success) {
+          btn.textContent = 'Something went wrong \u2014 try again';
+          btn.disabled = false;
+          return;
+        }
+
+        showState('check', `Thanks, ${data.name}!`, 'Your picks have been recorded.');
+      } catch (e) {
+        btn.textContent = 'Something went wrong \u2014 try again';
+        btn.disabled = false;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
