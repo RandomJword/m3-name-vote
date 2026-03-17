@@ -607,18 +607,28 @@
       try {
         const { data, error } = await db.rpc('submit_vote', {
           voter_token: token,
-          vote_data: voteData,
+          vote_data: JSON.stringify(voteData),
           voter_comment: comment
         });
 
-        if (error || !data?.success) {
+        if (error) {
+          console.error('Submit error:', error);
           btn.textContent = 'Something went wrong \u2014 try again';
           btn.disabled = false;
           return;
         }
 
-        showState('check', `Thanks, ${data.name}!`, 'Your picks have been recorded.');
+        const result = Array.isArray(data) ? data[0] : data;
+        if (!result?.success) {
+          console.error('Submit rejected:', result);
+          btn.textContent = 'Something went wrong \u2014 try again';
+          btn.disabled = false;
+          return;
+        }
+
+        showState('check', `Thanks, ${result.name}!`, 'Your picks have been recorded.');
       } catch (e) {
+        console.error('Submit exception:', e);
         btn.textContent = 'Something went wrong \u2014 try again';
         btn.disabled = false;
       }

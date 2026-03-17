@@ -437,6 +437,9 @@
       text-transform: uppercase;
       letter-spacing: 0.06em;
       border-bottom: 2px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.2s;
       white-space: nowrap;
     }
 
@@ -445,6 +448,10 @@
       border-bottom: 1px solid var(--border);
       vertical-align: top;
     }
+
+    .votes-table th:hover { color: var(--forest); }
+    .votes-table th .sort-arrow { font-size: 0.65rem; margin-left: 0.3rem; opacity: 0.4; }
+    .votes-table th.sorted .sort-arrow { opacity: 1; color: var(--forest); }
 
     .votes-table tr:last-child td { border-bottom: none; }
 
@@ -723,6 +730,42 @@
     }
 
     // --- Individual Votes Table ---
+    let sortCol = null;  // 'voter', 'make-math-mine', 'volta', 'counted'
+    let sortDir = 'desc';
+
+    function sortVoters(votedVoters, votesByVoter) {
+      if (!sortCol) return votedVoters;
+      const sorted = [...votedVoters].sort((a, b) => {
+        let va, vb;
+        if (sortCol === 'voter') {
+          va = a.name.toLowerCase();
+          vb = b.name.toLowerCase();
+          return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+        }
+        if (sortCol === 'voted_at') {
+          va = new Date(a.voted_at).getTime();
+          vb = new Date(b.voted_at).getTime();
+          return sortDir === 'asc' ? va - vb : vb - va;
+        }
+        const aVote = (votesByVoter[a.id] || {})[sortCol];
+        const bVote = (votesByVoter[b.id] || {})[sortCol];
+        va = aVote ? aVote.rating : 0;
+        vb = bVote ? bVote.rating : 0;
+        return sortDir === 'asc' ? va - vb : vb - va;
+      });
+      return sorted;
+    }
+
+    function handleSort(col) {
+      if (sortCol === col) {
+        sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+      } else {
+        sortCol = col;
+        sortDir = 'desc';
+      }
+      renderIndividualVotes();
+    }
+
     function renderIndividualVotes() {
       const section = document.getElementById('votes-section');
       const votedVoters = voters.filter(v => v.voted_at);
@@ -743,23 +786,33 @@
         votesByVoter[v.voter_id][v.brand] = v;
       });
 
+      const sortedVoters = sortVoters(votedVoters, votesByVoter);
+
+      function thLabel(col, name) {
+        const active = sortCol === col;
+        const arrow = active ? (sortDir === 'desc' ? '\u25BC' : '\u25B2') : '\u25BC';
+        return `<th class="${active ? 'sorted' : ''}" onclick="handleSort('${col}')">${name}<span class="sort-arrow">${arrow}</span></th>`;
+      }
+
       section.innerHTML = `
         <div class="section-label">Individual Votes</div>
         <div class="votes-table-wrap">
           <table class="votes-table">
             <thead>
               <tr>
-                <th>Voter</th>
-                ${BRAND_ORDER.map(b => `<th>${BRAND_META[b].name}</th>`).join('')}
-                <th>Comment</th>
+                ${thLabel('voter', 'Voter')}
+                ${thLabel('voted_at', 'Voted')}
+                ${BRAND_ORDER.map(b => thLabel(b, BRAND_META[b].name)).join('')}
+                <th style="cursor:default">Comment</th>
               </tr>
             </thead>
             <tbody>
-              ${votedVoters.map(voter => {
+              ${sortedVoters.map(voter => {
                 const vb = votesByVoter[voter.id] || {};
                 return `
                   <tr>
                     <td><strong>${esc(voter.name)}</strong></td>
+                    <td style="font-size:0.78rem;color:var(--text-muted);white-space:nowrap">${new Date(voter.voted_at).toLocaleDateString('en-US', {month:'short',day:'numeric'})} ${new Date(voter.voted_at).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'})}</td>
                     ${BRAND_ORDER.map(brandId => {
                       const v = vb[brandId];
                       if (!v) return '<td>\u2014</td>';
