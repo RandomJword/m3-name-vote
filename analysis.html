@@ -467,97 +467,41 @@
 <body>
   <div class="container" id="app"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script>
-    // --- Raw data ---
-    const votes = [
-      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.com",voter_id:"3b66c74a-283d-48d7-a5c7-ec07d32b9649"},
-      {brand:"volta",rating:1,preferred_domain:"myvolta.ai",voter_id:"3b66c74a-283d-48d7-a5c7-ec07d32b9649"},
-      {brand:"counted",rating:1,preferred_domain:"counted.vip",voter_id:"3b66c74a-283d-48d7-a5c7-ec07d32b9649"},
-      {brand:"make-math-mine",rating:4,preferred_domain:"makemathmine.com",voter_id:"b39c124c-346e-4146-97b0-258e487d9ea3"},
-      {brand:"volta",rating:5,preferred_domain:"myvolta.ai",voter_id:"b39c124c-346e-4146-97b0-258e487d9ea3"},
-      {brand:"counted",rating:4,preferred_domain:"becounted.ai",voter_id:"b39c124c-346e-4146-97b0-258e487d9ea3"},
-      {brand:"make-math-mine",rating:3,preferred_domain:"makemathmine.com",voter_id:"5f179db2-421e-44f9-a632-f7c486f0d7af"},
-      {brand:"volta",rating:5,preferred_domain:"myvolta.ai",voter_id:"5f179db2-421e-44f9-a632-f7c486f0d7af"},
-      {brand:"counted",rating:3,preferred_domain:"becounted.ai",voter_id:"5f179db2-421e-44f9-a632-f7c486f0d7af"},
-      {brand:"make-math-mine",rating:2,preferred_domain:"makemathmine.com",voter_id:"be995c3c-ed65-4acf-96eb-108517a63e05"},
-      {brand:"volta",rating:5,preferred_domain:"myvolta.ai",voter_id:"be995c3c-ed65-4acf-96eb-108517a63e05"},
-      {brand:"counted",rating:3,preferred_domain:"becounted.ai",voter_id:"be995c3c-ed65-4acf-96eb-108517a63e05"},
-      {brand:"make-math-mine",rating:4,preferred_domain:"makemathmine.com",voter_id:"d6d7eb1d-1647-43ed-ae69-dee2e9c0109b"},
-      {brand:"volta",rating:3,preferred_domain:"volta.vip",voter_id:"d6d7eb1d-1647-43ed-ae69-dee2e9c0109b"},
-      {brand:"counted",rating:4,preferred_domain:"counted.vip",voter_id:"d6d7eb1d-1647-43ed-ae69-dee2e9c0109b"},
-      {brand:"make-math-mine",rating:3,preferred_domain:"makemathmine.com",voter_id:"892160a6-0b98-4090-9e51-afe35e7063fd"},
-      {brand:"volta",rating:2,preferred_domain:"myvolta.ai",voter_id:"892160a6-0b98-4090-9e51-afe35e7063fd"},
-      {brand:"counted",rating:5,preferred_domain:"becounted.ai",voter_id:"892160a6-0b98-4090-9e51-afe35e7063fd"},
-      {brand:"make-math-mine",rating:2,preferred_domain:"makemathmine.com",voter_id:"e42f4fa6-b360-410d-8f71-563a13505a37"},
-      {brand:"volta",rating:1,preferred_domain:"volta.vip",voter_id:"e42f4fa6-b360-410d-8f71-563a13505a37"},
-      {brand:"counted",rating:5,preferred_domain:"counted.vip",voter_id:"e42f4fa6-b360-410d-8f71-563a13505a37"},
-      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.com",voter_id:"d7f44f2f-2f8f-4fa6-8034-3e8907314f1e"},
-      {brand:"volta",rating:4,preferred_domain:"volta.vip",voter_id:"d7f44f2f-2f8f-4fa6-8034-3e8907314f1e"},
-      {brand:"counted",rating:3,preferred_domain:"counted.vip",voter_id:"d7f44f2f-2f8f-4fa6-8034-3e8907314f1e"},
-      {brand:"make-math-mine",rating:4,preferred_domain:"makemathmine.com",voter_id:"7c69dbc3-3333-4cf7-9d02-5f39f2780ad7"},
-      {brand:"volta",rating:1,preferred_domain:"volta.vip",voter_id:"7c69dbc3-3333-4cf7-9d02-5f39f2780ad7"},
-      {brand:"counted",rating:4,preferred_domain:"counted.vip",voter_id:"7c69dbc3-3333-4cf7-9d02-5f39f2780ad7"},
-      {brand:"make-math-mine",rating:4,preferred_domain:"makemathmine.com",voter_id:"372eadcd-cbd9-4c0a-b779-0612a96e3c86"},
-      {brand:"volta",rating:3,preferred_domain:"volta.vip",voter_id:"372eadcd-cbd9-4c0a-b779-0612a96e3c86"},
-      {brand:"counted",rating:4,preferred_domain:"counted.vip",voter_id:"372eadcd-cbd9-4c0a-b779-0612a96e3c86"},
-      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.ai",voter_id:"d490214a-1b9e-46b5-a3fc-c1a19b783ee2"},
-      {brand:"volta",rating:4,preferred_domain:"myvolta.ai",voter_id:"d490214a-1b9e-46b5-a3fc-c1a19b783ee2"},
-      {brand:"counted",rating:3,preferred_domain:"becounted.ai",voter_id:"d490214a-1b9e-46b5-a3fc-c1a19b783ee2"},
-      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.com",voter_id:"9507da1e-ed10-4c71-b90e-2aaf427a9b12"},
-      {brand:"volta",rating:1,preferred_domain:"volta.vip",voter_id:"9507da1e-ed10-4c71-b90e-2aaf427a9b12"},
-      {brand:"counted",rating:1,preferred_domain:"becounted.ai",voter_id:"9507da1e-ed10-4c71-b90e-2aaf427a9b12"},
-      {brand:"make-math-mine",rating:3,preferred_domain:"makemathmine.com",voter_id:"f9941666-44f1-4f4e-bd15-9136f020d5c0"},
-      {brand:"volta",rating:2,preferred_domain:"myvolta.ai",voter_id:"f9941666-44f1-4f4e-bd15-9136f020d5c0"},
-      {brand:"counted",rating:5,preferred_domain:"becounted.ai",voter_id:"f9941666-44f1-4f4e-bd15-9136f020d5c0"},
-      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.ai",voter_id:"7106e1f3-d4da-4abf-947d-41c805dfae61"},
-      {brand:"volta",rating:2,preferred_domain:"myvolta.ai",voter_id:"7106e1f3-d4da-4abf-947d-41c805dfae61"},
-      {brand:"counted",rating:5,preferred_domain:"becounted.ai",voter_id:"7106e1f3-d4da-4abf-947d-41c805dfae61"},
-      {brand:"make-math-mine",rating:3,preferred_domain:"makemathmine.com",voter_id:"4e44aaa2-9ec8-4643-ba31-e621d6c2e952"},
-      {brand:"volta",rating:1,preferred_domain:"volta.vip",voter_id:"4e44aaa2-9ec8-4643-ba31-e621d6c2e952"},
-      {brand:"counted",rating:1,preferred_domain:"counted.vip",voter_id:"4e44aaa2-9ec8-4643-ba31-e621d6c2e952"},
-      {brand:"make-math-mine",rating:3,preferred_domain:"makemathmine.com",voter_id:"1027a195-087b-4748-9fdc-34647321eec2"},
-      {brand:"volta",rating:4,preferred_domain:"volta.vip",voter_id:"1027a195-087b-4748-9fdc-34647321eec2"},
-      {brand:"counted",rating:5,preferred_domain:"counted.vip",voter_id:"1027a195-087b-4748-9fdc-34647321eec2"},
-      {brand:"make-math-mine",rating:2,preferred_domain:"makemathmine.com",voter_id:"94536dbb-c656-4d3c-9ad8-bd9e6ac5c691"},
-      {brand:"volta",rating:1,preferred_domain:"volta.vip",voter_id:"94536dbb-c656-4d3c-9ad8-bd9e6ac5c691"},
-      {brand:"counted",rating:5,preferred_domain:"becounted.ai",voter_id:"94536dbb-c656-4d3c-9ad8-bd9e6ac5c691"},
-      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.com",voter_id:"3eb67248-a476-4583-aac7-6257a667101b"},
-      {brand:"volta",rating:1,preferred_domain:"volta.vip",voter_id:"3eb67248-a476-4583-aac7-6257a667101b"},
-      {brand:"counted",rating:2,preferred_domain:"counted.vip",voter_id:"3eb67248-a476-4583-aac7-6257a667101b"},
-      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.com",voter_id:"aabef29b-b515-4617-b853-58c9a913f190"},
-      {brand:"volta",rating:4,preferred_domain:"myvolta.ai",voter_id:"aabef29b-b515-4617-b853-58c9a913f190"},
-      {brand:"counted",rating:3,preferred_domain:"counted.vip",voter_id:"aabef29b-b515-4617-b853-58c9a913f190"},
-      {brand:"counted",rating:3,preferred_domain:"counted.vip",voter_id:"56b08d22-09af-49d2-a9a2-c60dbf10c6b3"},
-      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.com",voter_id:"56b08d22-09af-49d2-a9a2-c60dbf10c6b3"},
-      {brand:"volta",rating:4,preferred_domain:"volta.vip",voter_id:"56b08d22-09af-49d2-a9a2-c60dbf10c6b3"}
-    ];
-
-    const voters = [
-      {id:"3b66c74a-283d-48d7-a5c7-ec07d32b9649",name:"Virnard",comment:null},
-      {id:"b39c124c-346e-4146-97b0-258e487d9ea3",name:"Joshua",comment:"Tough call between the two URLs for Volta. Seem equally good in different ways."},
-      {id:"5f179db2-421e-44f9-a632-f7c486f0d7af",name:"Alex",comment:"Volta sounds like a brand that might have a Math app. Counted is too abstract though it would be my second choice. Make Math Mine seems to call out the problem a little."},
-      {id:"be995c3c-ed65-4acf-96eb-108517a63e05",name:"Josh",comment:null},
-      {id:"d6d7eb1d-1647-43ed-ae69-dee2e9c0109b",name:"Kristin",comment:"Make Math Mine best describes the app. The user is telling the app to tailor math instruction to their interests and expresses the reclaiming of math that many adults felt was not ours when we were in school.\nCounted has a similar vibe without saying it as clearly.\nVolta doesn\u2019t feel connected to the app\u2019s purpose."},
-      {id:"892160a6-0b98-4090-9e51-afe35e7063fd",name:"Michael",comment:"Tropic of Calculus ?! \ud83d\ude11"},
-      {id:"e42f4fa6-b360-410d-8f71-563a13505a37",name:"Cheryl",comment:"ai currently has negative connotations in my arenas\u2014even though we all use it whether it is known or not. I like VOLTA, but it doesn\u2019t tell me about the app like VENMO and VENTRA do, that\u2019s why I went with COUNTED."},
-      {id:"d7f44f2f-2f8f-4fa6-8034-3e8907314f1e",name:"Heather",comment:null},
-      {id:"7c69dbc3-3333-4cf7-9d02-5f39f2780ad7",name:"Jeremy",comment:null},
-      {id:"372eadcd-cbd9-4c0a-b779-0612a96e3c86",name:"Thuan",comment:null},
-      {id:"d490214a-1b9e-46b5-a3fc-c1a19b783ee2",name:"Lydia",comment:"I like makemathmine because it gets that approachability across."},
-      {id:"9507da1e-ed10-4c71-b90e-2aaf427a9b12",name:"Mary",comment:"People in my generation are Leary of ai \u2014 you might take that into consideration depending on you audience. I really like make math mine"},
-      {id:"f9941666-44f1-4f4e-bd15-9136f020d5c0",name:"Jenny",comment:"I like counted. I like.com urls. I don\u2019t know what Volta is. I miss my friend Joshua."},
-      {id:"7106e1f3-d4da-4abf-947d-41c805dfae61",name:"Dondrea",comment:"Make Math Mine is more self-explanatory, of course. Counted is nice too, just a bit more vague."},
-      {id:"4e44aaa2-9ec8-4643-ba31-e621d6c2e952",name:"Deb",comment:"I am not keen on the ai suffix because it doesn\u2019t seem like an app \u2014 it seems like an ai tool"},
-      {id:"1027a195-087b-4748-9fdc-34647321eec2",name:"Chad",comment:"\u201cCounted\u201d makes me feel seen. The name is clever and inclusive."},
-      {id:"94536dbb-c656-4d3c-9ad8-bd9e6ac5c691",name:"Sean",comment:null},
-      {id:"3eb67248-a476-4583-aac7-6257a667101b",name:"Mom",comment:null},
-      {id:"aabef29b-b515-4617-b853-58c9a913f190",name:"Chloe",comment:"Though I like the simplicity of Volta, I feel like it doesn\u2019t necessarily convey what the app is about. I like the simplicity of Counted, too, and I think it explains a little more about the app\u2019s purpose. But Make Math Mine, with delightful alliteration, short words that are quick to say aloud, and a name that conveys its purpose perfectly, is the best option in my opinion."},
-      {id:"56b08d22-09af-49d2-a9a2-c60dbf10c6b3",name:"Dad",comment:null}
-    ];
-
     const BRANDS = ['make-math-mine', 'volta', 'counted'];
     const NAMES = { 'make-math-mine': 'Make Math Mine', 'volta': 'Volta', 'counted': 'Counted' };
     const FILLS = { 'make-math-mine': 'fill-mmm', 'volta': 'fill-volta', 'counted': 'fill-counted' };
+
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadAndRender() {
+      const app = document.getElementById('app');
+      app.innerHTML = '<div style="text-align:center;padding:5rem 1rem;color:var(--text-muted)">Loading votes\u2026</div>';
+
+      const [voteRes, voterRes] = await Promise.all([
+        db.from('votes').select('brand,rating,preferred_domain,voter_id'),
+        db.from('voters').select('id,name,comment').not('voted_at', 'is', null)
+      ]);
+
+      if (voteRes.error || voterRes.error) {
+        app.innerHTML = '<div style="text-align:center;padding:5rem 1rem;color:var(--text-muted)">Error loading data. Try refreshing.</div>';
+        return;
+      }
+
+      const votes = voteRes.data;
+      const voters = voterRes.data;
+
+      if (!voters.length) {
+        app.innerHTML = '<div style="text-align:center;padding:5rem 1rem;color:var(--text-muted)">No votes yet.</div>';
+        return;
+      }
+
+      render(votes, voters);
+    }
+
+    function render(votes, voters) {
     const N = voters.length;
 
     // --- Helpers ---
@@ -978,6 +922,9 @@
         </div>
       </div>
     `;
+    } // end render()
+
+    loadAndRender();
   </script>
 </body>
 </html>
