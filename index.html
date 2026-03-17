@@ -607,7 +607,7 @@
       try {
         const { data, error } = await db.rpc('submit_vote', {
           voter_token: token,
-          vote_data: JSON.stringify(voteData),
+          vote_data: voteData,
           voter_comment: comment
         });
 
