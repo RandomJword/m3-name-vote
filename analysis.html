@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Name Vote — Deep Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f4ef;
+      --card: #ffffff;
+      --forest: #2d4a3e;
+      --forest-light: #e4ede7;
+      --text: #44403c;
+      --text-dark: #2d2821;
+      --text-muted: #6b645e;
+      --text-label: #7a7268;
+      --border: #e0d8ce;
+      --accent: #d6a87a;
+      --accent-deep: #b8844a;
+      --sage: #d8f3dc;
+      --sage-dark: #3d7554;
+      --amber: #fef3c7;
+      --amber-text: #92400e;
+      --rose: #fecdd3;
+      --rose-text: #9f1239;
+      --shadow-card: 0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+      --shadow-section: 0 8px 40px rgba(0,0,0,0.06);
+      --radius: 12px;
+      --radius-lg: 20px;
+      --font-serif: 'Fraunces', Georgia, serif;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+      --mmm: #2d4a3e;
+      --mmm-bg: #e4ede7;
+      --volta: #8a6838;
+      --volta-bg: #fef3c7;
+      --counted: #6b4c8a;
+      --counted-bg: #ede4f3;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 2.5rem 1rem 4rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container { max-width: 900px; margin: 0 auto; }
+
+    /* Header */
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .page-header h1 {
+      font-family: var(--font-serif);
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-header .subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .voter-count {
+      display: inline-block;
+      background: var(--forest-light);
+      color: var(--forest);
+      font-weight: 600;
+      font-size: 0.82rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      margin-top: 0.75rem;
+    }
+
+    /* Winner banner */
+    .winner-banner {
+      background: var(--forest);
+      color: #fff;
+      border-radius: var(--radius-lg);
+      padding: 2rem 2.5rem;
+      margin-bottom: 2.5rem;
+      text-align: center;
+    }
+
+    .winner-banner .crown { font-size: 2rem; margin-bottom: 0.5rem; }
+
+    .winner-banner h2 {
+      font-family: var(--font-serif);
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .winner-banner .win-count {
+      font-size: 1rem;
+      opacity: 0.85;
+    }
+
+    /* Section */
+    .analysis-section {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-section);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    .section-method {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      max-width: 340px;
+      text-align: right;
+      line-height: 1.4;
+    }
+
+    /* Rank rows */
+    .rank-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.85rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .rank-row:last-child { border-bottom: none; }
+
+    .rank-num {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--border);
+      width: 32px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .rank-row:first-child .rank-num { color: var(--forest); }
+
+    .rank-brand {
+      font-weight: 600;
+      color: var(--text-dark);
+      min-width: 140px;
+      flex-shrink: 0;
+    }
+
+    .rank-bar-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .rank-bar-track {
+      flex: 1;
+      height: 28px;
+      background: #f3ede6;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .rank-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.6s ease;
+      min-width: 2px;
+    }
+
+    .fill-mmm { background: var(--mmm); }
+    .fill-volta { background: var(--volta); }
+    .fill-counted { background: var(--counted); }
+
+    .rank-bar-fill.muted { opacity: 0.35; }
+
+    .rank-score {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text-dark);
+      min-width: 52px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .rank-score .unit {
+      font-weight: 400;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Head-to-head grid */
+    .h2h-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .h2h-card {
+      background: #faf7f3;
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .h2h-matchup {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-label);
+      margin-bottom: 0.75rem;
+    }
+
+    .h2h-vs {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .h2h-count {
+      font-family: var(--font-serif);
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .h2h-sep {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .h2h-winner-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    /* Distribution heatmap */
+    .dist-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .dist-table th {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-label);
+      padding: 0.5rem 0.75rem;
+      text-align: center;
+    }
+
+    .dist-table th:first-child { text-align: left; }
+
+    .dist-table td {
+      padding: 0.6rem 0.75rem;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .dist-table td:first-child {
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    .dist-cell {
+      border-radius: 6px;
+      padding: 0.35rem 0.5rem;
+      display: inline-block;
+      min-width: 36px;
+    }
+
+    /* Polarization */
+    .polar-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 0;
+    }
+
+    .polar-brand {
+      font-weight: 600;
+      color: var(--text-dark);
+      min-width: 140px;
+    }
+
+    .polar-spectrum {
+      flex: 1;
+      height: 40px;
+      display: flex;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .polar-seg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #fff;
+      transition: flex 0.4s;
+    }
+
+    .polar-verdict {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      min-width: 100px;
+      text-align: right;
+    }
+
+    /* Domain results */
+    .domain-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .domain-row:last-child { border-bottom: none; }
+
+    .domain-brand-label {
+      font-weight: 600;
+      color: var(--text-dark);
+      min-width: 140px;
+      flex-shrink: 0;
+    }
+
+    .domain-bar {
+      flex: 1;
+      display: flex;
+      height: 36px;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .domain-seg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 0 0.5rem;
+      white-space: nowrap;
+    }
+
+    .domain-seg:first-child { background: var(--forest-light); color: var(--forest); }
+    .domain-seg:last-child { background: var(--amber); color: var(--amber-text); }
+
+    .domain-seg .pct { font-weight: 700; }
+
+    /* Comments */
+    .comment-card {
+      background: #faf7f3;
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      border-left: 3px solid var(--accent);
+    }
+
+    .comment-card:last-child { margin-bottom: 0; }
+
+    .comment-author {
+      font-weight: 600;
+      font-size: 0.82rem;
+      color: var(--accent-deep);
+      margin-bottom: 0.25rem;
+    }
+
+    .comment-text {
+      font-size: 0.92rem;
+      color: var(--text);
+      line-height: 1.55;
+      font-style: italic;
+    }
+
+    /* Tally strip */
+    .tally-strip {
+      display: flex;
+      gap: 0.35rem;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .tally-box {
+      flex: 1;
+      text-align: center;
+      padding: 1rem 0.5rem;
+      border-radius: var(--radius);
+      background: #faf7f3;
+    }
+
+    .tally-box .num {
+      font-family: var(--font-serif);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .tally-box .lbl {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.15rem;
+    }
+
+    .tally-box.winner {
+      background: var(--forest-light);
+    }
+
+    .tally-box.winner .num { color: var(--forest); }
+
+    /* Responsive */
+    @media (max-width: 680px) {
+      .page-header h1 { font-size: 1.6rem; }
+      .analysis-section { padding: 1.25rem; }
+      .section-header { flex-direction: column; gap: 0.5rem; }
+      .section-method { text-align: left; max-width: none; }
+      .h2h-grid { grid-template-columns: 1fr; }
+      .rank-brand { min-width: 100px; font-size: 0.88rem; }
+      .rank-score { min-width: 44px; font-size: 0.95rem; }
+      .tally-strip { flex-wrap: wrap; }
+      .tally-box { min-width: calc(33% - 0.25rem); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="app"></div>
+
+  <script>
+    // --- Raw data ---
+    const votes = [
+      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.com",voter_id:"3b66c74a-283d-48d7-a5c7-ec07d32b9649"},
+      {brand:"volta",rating:1,preferred_domain:"myvolta.ai",voter_id:"3b66c74a-283d-48d7-a5c7-ec07d32b9649"},
+      {brand:"counted",rating:1,preferred_domain:"counted.vip",voter_id:"3b66c74a-283d-48d7-a5c7-ec07d32b9649"},
+      {brand:"make-math-mine",rating:4,preferred_domain:"makemathmine.com",voter_id:"b39c124c-346e-4146-97b0-258e487d9ea3"},
+      {brand:"volta",rating:5,preferred_domain:"myvolta.ai",voter_id:"b39c124c-346e-4146-97b0-258e487d9ea3"},
+      {brand:"counted",rating:4,preferred_domain:"becounted.ai",voter_id:"b39c124c-346e-4146-97b0-258e487d9ea3"},
+      {brand:"make-math-mine",rating:3,preferred_domain:"makemathmine.com",voter_id:"5f179db2-421e-44f9-a632-f7c486f0d7af"},
+      {brand:"volta",rating:5,preferred_domain:"myvolta.ai",voter_id:"5f179db2-421e-44f9-a632-f7c486f0d7af"},
+      {brand:"counted",rating:3,preferred_domain:"becounted.ai",voter_id:"5f179db2-421e-44f9-a632-f7c486f0d7af"},
+      {brand:"make-math-mine",rating:2,preferred_domain:"makemathmine.com",voter_id:"be995c3c-ed65-4acf-96eb-108517a63e05"},
+      {brand:"volta",rating:5,preferred_domain:"myvolta.ai",voter_id:"be995c3c-ed65-4acf-96eb-108517a63e05"},
+      {brand:"counted",rating:3,preferred_domain:"becounted.ai",voter_id:"be995c3c-ed65-4acf-96eb-108517a63e05"},
+      {brand:"make-math-mine",rating:4,preferred_domain:"makemathmine.com",voter_id:"d6d7eb1d-1647-43ed-ae69-dee2e9c0109b"},
+      {brand:"volta",rating:3,preferred_domain:"volta.vip",voter_id:"d6d7eb1d-1647-43ed-ae69-dee2e9c0109b"},
+      {brand:"counted",rating:4,preferred_domain:"counted.vip",voter_id:"d6d7eb1d-1647-43ed-ae69-dee2e9c0109b"},
+      {brand:"make-math-mine",rating:3,preferred_domain:"makemathmine.com",voter_id:"892160a6-0b98-4090-9e51-afe35e7063fd"},
+      {brand:"volta",rating:2,preferred_domain:"myvolta.ai",voter_id:"892160a6-0b98-4090-9e51-afe35e7063fd"},
+      {brand:"counted",rating:5,preferred_domain:"becounted.ai",voter_id:"892160a6-0b98-4090-9e51-afe35e7063fd"},
+      {brand:"make-math-mine",rating:2,preferred_domain:"makemathmine.com",voter_id:"e42f4fa6-b360-410d-8f71-563a13505a37"},
+      {brand:"volta",rating:1,preferred_domain:"volta.vip",voter_id:"e42f4fa6-b360-410d-8f71-563a13505a37"},
+      {brand:"counted",rating:5,preferred_domain:"counted.vip",voter_id:"e42f4fa6-b360-410d-8f71-563a13505a37"},
+      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.com",voter_id:"d7f44f2f-2f8f-4fa6-8034-3e8907314f1e"},
+      {brand:"volta",rating:4,preferred_domain:"volta.vip",voter_id:"d7f44f2f-2f8f-4fa6-8034-3e8907314f1e"},
+      {brand:"counted",rating:3,preferred_domain:"counted.vip",voter_id:"d7f44f2f-2f8f-4fa6-8034-3e8907314f1e"},
+      {brand:"make-math-mine",rating:4,preferred_domain:"makemathmine.com",voter_id:"7c69dbc3-3333-4cf7-9d02-5f39f2780ad7"},
+      {brand:"volta",rating:1,preferred_domain:"volta.vip",voter_id:"7c69dbc3-3333-4cf7-9d02-5f39f2780ad7"},
+      {brand:"counted",rating:4,preferred_domain:"counted.vip",voter_id:"7c69dbc3-3333-4cf7-9d02-5f39f2780ad7"},
+      {brand:"make-math-mine",rating:4,preferred_domain:"makemathmine.com",voter_id:"372eadcd-cbd9-4c0a-b779-0612a96e3c86"},
+      {brand:"volta",rating:3,preferred_domain:"volta.vip",voter_id:"372eadcd-cbd9-4c0a-b779-0612a96e3c86"},
+      {brand:"counted",rating:4,preferred_domain:"counted.vip",voter_id:"372eadcd-cbd9-4c0a-b779-0612a96e3c86"},
+      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.ai",voter_id:"d490214a-1b9e-46b5-a3fc-c1a19b783ee2"},
+      {brand:"volta",rating:4,preferred_domain:"myvolta.ai",voter_id:"d490214a-1b9e-46b5-a3fc-c1a19b783ee2"},
+      {brand:"counted",rating:3,preferred_domain:"becounted.ai",voter_id:"d490214a-1b9e-46b5-a3fc-c1a19b783ee2"},
+      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.com",voter_id:"9507da1e-ed10-4c71-b90e-2aaf427a9b12"},
+      {brand:"volta",rating:1,preferred_domain:"volta.vip",voter_id:"9507da1e-ed10-4c71-b90e-2aaf427a9b12"},
+      {brand:"counted",rating:1,preferred_domain:"becounted.ai",voter_id:"9507da1e-ed10-4c71-b90e-2aaf427a9b12"},
+      {brand:"make-math-mine",rating:3,preferred_domain:"makemathmine.com",voter_id:"f9941666-44f1-4f4e-bd15-9136f020d5c0"},
+      {brand:"volta",rating:2,preferred_domain:"myvolta.ai",voter_id:"f9941666-44f1-4f4e-bd15-9136f020d5c0"},
+      {brand:"counted",rating:5,preferred_domain:"becounted.ai",voter_id:"f9941666-44f1-4f4e-bd15-9136f020d5c0"},
+      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.ai",voter_id:"7106e1f3-d4da-4abf-947d-41c805dfae61"},
+      {brand:"volta",rating:2,preferred_domain:"myvolta.ai",voter_id:"7106e1f3-d4da-4abf-947d-41c805dfae61"},
+      {brand:"counted",rating:5,preferred_domain:"becounted.ai",voter_id:"7106e1f3-d4da-4abf-947d-41c805dfae61"},
+      {brand:"make-math-mine",rating:3,preferred_domain:"makemathmine.com",voter_id:"4e44aaa2-9ec8-4643-ba31-e621d6c2e952"},
+      {brand:"volta",rating:1,preferred_domain:"volta.vip",voter_id:"4e44aaa2-9ec8-4643-ba31-e621d6c2e952"},
+      {brand:"counted",rating:1,preferred_domain:"counted.vip",voter_id:"4e44aaa2-9ec8-4643-ba31-e621d6c2e952"},
+      {brand:"make-math-mine",rating:3,preferred_domain:"makemathmine.com",voter_id:"1027a195-087b-4748-9fdc-34647321eec2"},
+      {brand:"volta",rating:4,preferred_domain:"volta.vip",voter_id:"1027a195-087b-4748-9fdc-34647321eec2"},
+      {brand:"counted",rating:5,preferred_domain:"counted.vip",voter_id:"1027a195-087b-4748-9fdc-34647321eec2"},
+      {brand:"make-math-mine",rating:2,preferred_domain:"makemathmine.com",voter_id:"94536dbb-c656-4d3c-9ad8-bd9e6ac5c691"},
+      {brand:"volta",rating:1,preferred_domain:"volta.vip",voter_id:"94536dbb-c656-4d3c-9ad8-bd9e6ac5c691"},
+      {brand:"counted",rating:5,preferred_domain:"becounted.ai",voter_id:"94536dbb-c656-4d3c-9ad8-bd9e6ac5c691"},
+      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.com",voter_id:"3eb67248-a476-4583-aac7-6257a667101b"},
+      {brand:"volta",rating:1,preferred_domain:"volta.vip",voter_id:"3eb67248-a476-4583-aac7-6257a667101b"},
+      {brand:"counted",rating:2,preferred_domain:"counted.vip",voter_id:"3eb67248-a476-4583-aac7-6257a667101b"},
+      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.com",voter_id:"aabef29b-b515-4617-b853-58c9a913f190"},
+      {brand:"volta",rating:4,preferred_domain:"myvolta.ai",voter_id:"aabef29b-b515-4617-b853-58c9a913f190"},
+      {brand:"counted",rating:3,preferred_domain:"counted.vip",voter_id:"aabef29b-b515-4617-b853-58c9a913f190"},
+      {brand:"counted",rating:3,preferred_domain:"counted.vip",voter_id:"56b08d22-09af-49d2-a9a2-c60dbf10c6b3"},
+      {brand:"make-math-mine",rating:5,preferred_domain:"makemathmine.com",voter_id:"56b08d22-09af-49d2-a9a2-c60dbf10c6b3"},
+      {brand:"volta",rating:4,preferred_domain:"volta.vip",voter_id:"56b08d22-09af-49d2-a9a2-c60dbf10c6b3"}
+    ];
+
+    const voters = [
+      {id:"3b66c74a-283d-48d7-a5c7-ec07d32b9649",name:"Virnard",comment:null},
+      {id:"b39c124c-346e-4146-97b0-258e487d9ea3",name:"Joshua",comment:"Tough call between the two URLs for Volta. Seem equally good in different ways."},
+      {id:"5f179db2-421e-44f9-a632-f7c486f0d7af",name:"Alex",comment:"Volta sounds like a brand that might have a Math app. Counted is too abstract though it would be my second choice. Make Math Mine seems to call out the problem a little."},
+      {id:"be995c3c-ed65-4acf-96eb-108517a63e05",name:"Josh",comment:null},
+      {id:"d6d7eb1d-1647-43ed-ae69-dee2e9c0109b",name:"Kristin",comment:"Make Math Mine best describes the app. The user is telling the app to tailor math instruction to their interests and expresses the reclaiming of math that many adults felt was not ours when we were in school.\nCounted has a similar vibe without saying it as clearly.\nVolta doesn\u2019t feel connected to the app\u2019s purpose."},
+      {id:"892160a6-0b98-4090-9e51-afe35e7063fd",name:"Michael",comment:"Tropic of Calculus ?! \ud83d\ude11"},
+      {id:"e42f4fa6-b360-410d-8f71-563a13505a37",name:"Cheryl",comment:"ai currently has negative connotations in my arenas\u2014even though we all use it whether it is known or not. I like VOLTA, but it doesn\u2019t tell me about the app like VENMO and VENTRA do, that\u2019s why I went with COUNTED."},
+      {id:"d7f44f2f-2f8f-4fa6-8034-3e8907314f1e",name:"Heather",comment:null},
+      {id:"7c69dbc3-3333-4cf7-9d02-5f39f2780ad7",name:"Jeremy",comment:null},
+      {id:"372eadcd-cbd9-4c0a-b779-0612a96e3c86",name:"Thuan",comment:null},
+      {id:"d490214a-1b9e-46b5-a3fc-c1a19b783ee2",name:"Lydia",comment:"I like makemathmine because it gets that approachability across."},
+      {id:"9507da1e-ed10-4c71-b90e-2aaf427a9b12",name:"Mary",comment:"People in my generation are Leary of ai \u2014 you might take that into consideration depending on you audience. I really like make math mine"},
+      {id:"f9941666-44f1-4f4e-bd15-9136f020d5c0",name:"Jenny",comment:"I like counted. I like.com urls. I don\u2019t know what Volta is. I miss my friend Joshua."},
+      {id:"7106e1f3-d4da-4abf-947d-41c805dfae61",name:"Dondrea",comment:"Make Math Mine is more self-explanatory, of course. Counted is nice too, just a bit more vague."},
+      {id:"4e44aaa2-9ec8-4643-ba31-e621d6c2e952",name:"Deb",comment:"I am not keen on the ai suffix because it doesn\u2019t seem like an app \u2014 it seems like an ai tool"},
+      {id:"1027a195-087b-4748-9fdc-34647321eec2",name:"Chad",comment:"\u201cCounted\u201d makes me feel seen. The name is clever and inclusive."},
+      {id:"94536dbb-c656-4d3c-9ad8-bd9e6ac5c691",name:"Sean",comment:null},
+      {id:"3eb67248-a476-4583-aac7-6257a667101b",name:"Mom",comment:null},
+      {id:"aabef29b-b515-4617-b853-58c9a913f190",name:"Chloe",comment:"Though I like the simplicity of Volta, I feel like it doesn\u2019t necessarily convey what the app is about. I like the simplicity of Counted, too, and I think it explains a little more about the app\u2019s purpose. But Make Math Mine, with delightful alliteration, short words that are quick to say aloud, and a name that conveys its purpose perfectly, is the best option in my opinion."},
+      {id:"56b08d22-09af-49d2-a9a2-c60dbf10c6b3",name:"Dad",comment:null}
+    ];
+
+    const BRANDS = ['make-math-mine', 'volta', 'counted'];
+    const NAMES = { 'make-math-mine': 'Make Math Mine', 'volta': 'Volta', 'counted': 'Counted' };
+    const FILLS = { 'make-math-mine': 'fill-mmm', 'volta': 'fill-volta', 'counted': 'fill-counted' };
+    const N = voters.length;
+
+    // --- Helpers ---
+    function byBrand(brand) { return votes.filter(v => v.brand === brand); }
+    function ratings(brand) { return byBrand(brand).map(v => v.rating); }
+    function avg(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
+    function median(arr) { const s = [...arr].sort((a,b) => a-b); const m = Math.floor(s.length/2); return s.length % 2 ? s[m] : (s[m-1]+s[m])/2; }
+    function stddev(arr) { const m = avg(arr); return Math.sqrt(arr.reduce((s,v) => s + (v-m)**2, 0) / arr.length); }
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    // Group votes by voter
+    const byVoter = {};
+    votes.forEach(v => {
+      if (!byVoter[v.voter_id]) byVoter[v.voter_id] = {};
+      byVoter[v.voter_id][v.brand] = v;
+    });
+
+    // =========================================================
+    // 1. SIMPLE AVERAGE
+    // =========================================================
+    const avgResults = BRANDS.map(b => ({ brand: b, score: avg(ratings(b)) }))
+      .sort((a, b) => b.score - a.score);
+
+    // =========================================================
+    // 2. HEAD-TO-HEAD (Condorcet)
+    // =========================================================
+    function h2h(a, b) {
+      let aWins = 0, bWins = 0, ties = 0;
+      Object.values(byVoter).forEach(vb => {
+        const ra = vb[a]?.rating || 0, rb = vb[b]?.rating || 0;
+        if (ra > rb) aWins++;
+        else if (rb > ra) bWins++;
+        else ties++;
+      });
+      return { a, b, aWins, bWins, ties };
+    }
+
+    const h2hPairs = [
+      h2h('make-math-mine', 'volta'),
+      h2h('make-math-mine', 'counted'),
+      h2h('volta', 'counted')
+    ];
+
+    // Condorcet wins: how many head-to-head matchups each brand wins
+    const condorcetWins = {};
+    BRANDS.forEach(b => condorcetWins[b] = 0);
+    h2hPairs.forEach(p => {
+      if (p.aWins > p.bWins) condorcetWins[p.a]++;
+      else if (p.bWins > p.aWins) condorcetWins[p.b]++;
+    });
+
+    // =========================================================
+    // 3. MOST LOVED (count of 5-star ratings)
+    // =========================================================
+    const loved = BRANDS.map(b => ({ brand: b, fives: ratings(b).filter(r => r === 5).length }))
+      .sort((a, b) => b.fives - a.fives);
+
+    // =========================================================
+    // 4. LEAST HATED (count of 1-star and 2-star ratings, lower = better)
+    // =========================================================
+    const hated = BRANDS.map(b => ({ brand: b, lowRatings: ratings(b).filter(r => r <= 2).length }))
+      .sort((a, b) => a.lowRatings - b.lowRatings);
+
+    // =========================================================
+    // 5. APPROVAL VOTING (rating >= 4 counts as approval)
+    // =========================================================
+    const approval = BRANDS.map(b => ({ brand: b, approvals: ratings(b).filter(r => r >= 4).length }))
+      .sort((a, b) => b.approvals - a.approvals);
+
+    // =========================================================
+    // 6. BORDA COUNT
+    // Each voter ranks 3 brands. 1st place = 2 pts, 2nd = 1, 3rd = 0.
+    // Ties split points.
+    // =========================================================
+    const bordaScores = {};
+    BRANDS.forEach(b => bordaScores[b] = 0);
+    Object.values(byVoter).forEach(vb => {
+      const ranked = BRANDS.map(b => ({ brand: b, rating: vb[b]?.rating || 0 }))
+        .sort((a, b) => b.rating - a.rating);
+      // Handle ties by averaging positions
+      let i = 0;
+      while (i < ranked.length) {
+        let j = i;
+        while (j < ranked.length && ranked[j].rating === ranked[i].rating) j++;
+        const points = (2 - i + 2 - (j-1)) / 2; // avg of positions i..j-1 mapped to 2,1,0
+        const avgPts = Array.from({length: j-i}, (_, k) => 2 - (i+k)).reduce((a,b) => a+b, 0) / (j-i);
+        for (let k = i; k < j; k++) bordaScores[ranked[k].brand] += avgPts;
+        i = j;
+      }
+    });
+    const borda = BRANDS.map(b => ({ brand: b, score: bordaScores[b] }))
+      .sort((a, b) => b.score - a.score);
+
+    // =========================================================
+    // 7. STAR VOTING (Score Then Automatic Runoff)
+    // Step 1: Total score (sum of all ratings)
+    // Step 2: Top 2 go to automatic runoff (head-to-head)
+    // =========================================================
+    const totalScores = BRANDS.map(b => ({ brand: b, total: ratings(b).reduce((a,c) => a+c, 0) }))
+      .sort((a, b) => b.total - a.total);
+    const starTop2 = [totalScores[0].brand, totalScores[1].brand];
+    const starRunoff = h2h(starTop2[0], starTop2[1]);
+
+    // =========================================================
+    // 8. MAJORITY JUDGMENT (Median rating)
+    // =========================================================
+    const majJudgment = BRANDS.map(b => {
+      const r = ratings(b);
+      const med = median(r);
+      // Tiebreaker: % of ratings above median minus % below
+      const above = r.filter(x => x > med).length / r.length;
+      const below = r.filter(x => x < med).length / r.length;
+      return { brand: b, median: med, tiebreak: above - below };
+    }).sort((a, b) => b.median - a.median || b.tiebreak - a.tiebreak);
+
+    const MEDIAN_LABELS = { 1: "Doesn\u2019t work", 2: "Not great", 3: "It\u2019s fine", 4: "I like it", 5: "Love it" };
+
+    // =========================================================
+    // 9. NET PROMOTER STYLE: (% of 5s) - (% of 1s and 2s)
+    // =========================================================
+    const nps = BRANDS.map(b => {
+      const r = ratings(b);
+      const promoters = r.filter(x => x === 5).length / r.length;
+      const detractors = r.filter(x => x <= 2).length / r.length;
+      return { brand: b, score: Math.round((promoters - detractors) * 100) };
+    }).sort((a, b) => b.score - a.score);
+
+    // =========================================================
+    // 10. POLARIZATION (Std Dev)
+    // =========================================================
+    const polarization = BRANDS.map(b => {
+      const r = ratings(b);
+      return { brand: b, sd: stddev(r), dist: [1,2,3,4,5].map(n => r.filter(x => x === n).length) };
+    }).sort((a, b) => b.sd - a.sd);
+
+    // =========================================================
+    // 11. DOMAIN PREFERENCES
+    // =========================================================
+    const DOMAIN_MAP = {
+      'make-math-mine': ['makemathmine.com', 'makemathmine.ai'],
+      'volta': ['myvolta.ai', 'volta.vip'],
+      'counted': ['becounted.ai', 'counted.vip']
+    };
+
+    const domainResults = BRANDS.map(b => {
+      const bv = byBrand(b);
+      const counts = {};
+      DOMAIN_MAP[b].forEach(d => counts[d] = 0);
+      bv.forEach(v => { if (counts[v.preferred_domain] !== undefined) counts[v.preferred_domain]++; });
+      return { brand: b, domains: DOMAIN_MAP[b], counts };
+    });
+
+    // =========================================================
+    // COUNT METHOD WINS
+    // =========================================================
+    const methodWins = {};
+    BRANDS.forEach(b => methodWins[b] = 0);
+
+    // Simple avg
+    methodWins[avgResults[0].brand]++;
+    // Condorcet (most h2h wins)
+    const condorcetRanked = BRANDS.map(b => ({brand:b, wins:condorcetWins[b]})).sort((a,b) => b.wins - a.wins);
+    if (condorcetRanked[0].wins > condorcetRanked[1].wins) methodWins[condorcetRanked[0].brand]++;
+    // Most loved
+    methodWins[loved[0].brand]++;
+    // Least hated
+    methodWins[hated[0].brand]++;
+    // Approval
+    methodWins[approval[0].brand]++;
+    // Borda
+    methodWins[borda[0].brand]++;
+    // STAR
+    const starWinner = starRunoff.aWins >= starRunoff.bWins ? starRunoff.a : starRunoff.b;
+    methodWins[starWinner]++;
+    // Majority judgment
+    methodWins[majJudgment[0].brand]++;
+    // NPS
+    methodWins[nps[0].brand]++;
+
+    const totalMethods = 9;
+    const overallWinner = BRANDS.reduce((best, b) => methodWins[b] > methodWins[best] ? b : best, BRANDS[0]);
+
+    // =========================================================
+    // RENDER
+    // =========================================================
+    function renderRankSection(title, method, items, scoreFn, unitLabel = '') {
+      const maxVal = Math.max(...items.map(i => scoreFn(i)));
+      return `
+        <div class="analysis-section">
+          <div class="section-header">
+            <div class="section-title">${title}</div>
+            <div class="section-method">${method}</div>
+          </div>
+          ${items.map((item, i) => {
+            const pct = maxVal > 0 ? (scoreFn(item) / maxVal * 100) : 0;
+            const isFirst = i === 0;
+            return `
+              <div class="rank-row">
+                <div class="rank-num">${i + 1}</div>
+                <div class="rank-brand">${NAMES[item.brand]}</div>
+                <div class="rank-bar-wrap">
+                  <div class="rank-bar-track">
+                    <div class="rank-bar-fill ${FILLS[item.brand]} ${isFirst ? '' : 'muted'}" style="width:${pct}%"></div>
+                  </div>
+                  <div class="rank-score">${scoreFn(item)}${unitLabel ? `<span class="unit"> ${unitLabel}</span>` : ''}</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    const comments = voters.filter(v => v.comment).map(v => ({
+      name: v.name,
+      comment: v.comment
+    }));
+
+    document.getElementById('app').innerHTML = `
+      <div class="page-header">
+        <h1>Name Vote Analysis</h1>
+        <p class="subtitle">9 voting methods applied to ${N} ballots</p>
+        <div class="voter-count">${N} voters</div>
+      </div>
+
+      <div class="winner-banner">
+        <div class="crown">\u2605</div>
+        <h2>${NAMES[overallWinner]}</h2>
+        <div class="win-count">Wins ${methodWins[overallWinner]} of ${totalMethods} methods</div>
+      </div>
+
+      ${renderRankSection(
+        'Simple Average',
+        'Mean of all ratings (1\u20135 scale)',
+        avgResults,
+        i => i.score.toFixed(2)
+      )}
+
+      ${renderRankSection(
+        'Approval Voting',
+        'Count of ratings \u2265 4. Rewards broad acceptability over extreme love.',
+        approval,
+        i => i.approvals,
+        'of ' + N
+      )}
+
+      ${renderRankSection(
+        'Most Loved',
+        'Count of 5-star ratings. Who inspires the strongest enthusiasm?',
+        loved,
+        i => i.fives,
+        '\u2605'
+      )}
+
+      ${renderRankSection(
+        'Least Hated',
+        'Count of 1\u20132 star ratings. Lower is better\u2014who alienates the fewest people?',
+        hated,
+        i => N - i.lowRatings,
+        'safe'
+      )}
+
+      <div class="analysis-section">
+        <div class="section-header">
+          <div class="section-title">Head-to-Head (Condorcet)</div>
+          <div class="section-method">Every voter\u2019s ballot generates 3 pairwise matchups. The brand that beats more opponents wins.</div>
+        </div>
+        <div class="h2h-grid">
+          ${h2hPairs.map(p => {
+            const winner = p.aWins > p.bWins ? p.a : p.bWins > p.aWins ? p.b : null;
+            const winColor = winner ? (winner === p.a ? 'var(--forest)' : 'var(--counted)') : 'var(--text-muted)';
+            return `
+              <div class="h2h-card">
+                <div class="h2h-matchup">${NAMES[p.a]} vs ${NAMES[p.b]}</div>
+                <div class="h2h-vs">
+                  <span class="h2h-count" style="color:${p.aWins >= p.bWins ? 'var(--forest)' : 'var(--text-muted)'}">${p.aWins}</span>
+                  <span class="h2h-sep">\u2013</span>
+                  <span class="h2h-count" style="color:${p.bWins >= p.aWins ? 'var(--forest)' : 'var(--text-muted)'}">${p.bWins}</span>
+                </div>
+                ${p.ties ? `<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.4rem">${p.ties} tie${p.ties>1?'s':''}</div>` : ''}
+                ${winner
+                  ? `<span class="h2h-winner-label" style="background:var(--forest-light);color:var(--forest)">${NAMES[winner]} wins</span>`
+                  : `<span class="h2h-winner-label" style="background:var(--amber);color:var(--amber-text)">Tie</span>`
+                }
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      ${renderRankSection(
+        'Borda Count',
+        'Each voter\u2019s ballot ranks brands. 1st = 2 pts, 2nd = 1, 3rd = 0. Ties split points.',
+        borda,
+        i => i.score.toFixed(1),
+        'pts'
+      )}
+
+      <div class="analysis-section">
+        <div class="section-header">
+          <div class="section-title">STAR Voting</div>
+          <div class="section-method">Score Then Automatic Runoff. Top 2 by total score advance, then every ballot picks a side.</div>
+        </div>
+        <div style="text-align:center;margin-bottom:1rem">
+          <span style="font-size:0.82rem;color:var(--text-muted)">Scoring round:</span>
+          <span style="font-weight:600;color:var(--text-dark)">
+            ${totalScores.map(s => `${NAMES[s.brand]} (${s.total})`).join(' \u00B7 ')}
+          </span>
+        </div>
+        <div style="text-align:center;margin-bottom:0.75rem;font-size:0.82rem;color:var(--text-muted)">
+          Runoff: <strong>${NAMES[starTop2[0]]}</strong> vs <strong>${NAMES[starTop2[1]]}</strong>
+        </div>
+        <div class="h2h-grid" style="grid-template-columns:1fr;max-width:320px;margin:0 auto">
+          <div class="h2h-card">
+            <div class="h2h-vs">
+              <span class="h2h-count" style="color:${starRunoff.aWins >= starRunoff.bWins ? 'var(--forest)' : 'var(--text-muted)'}">${starRunoff.aWins}</span>
+              <span class="h2h-sep">\u2013</span>
+              <span class="h2h-count" style="color:${starRunoff.bWins >= starRunoff.aWins ? 'var(--forest)' : 'var(--text-muted)'}">${starRunoff.bWins}</span>
+            </div>
+            ${starRunoff.ties ? `<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.4rem">${starRunoff.ties} tie${starRunoff.ties>1?'s':''}</div>` : ''}
+            <span class="h2h-winner-label" style="background:var(--forest-light);color:var(--forest)">
+              ${NAMES[starWinner]} wins the runoff
+            </span>
+          </div>
+        </div>
+      </div>
+
+      ${renderRankSection(
+        'Majority Judgment',
+        'Median rating, not mean. Resistant to strategic outlier votes. Tiebreak: share above vs below median.',
+        majJudgment,
+        i => i.median,
+        '(' + MEDIAN_LABELS[majJudgment[0].median] + ')'
+      )}
+
+      ${renderRankSection(
+        'Net Promoter Style',
+        '% who gave a 5 minus % who gave 1\u20132. Range: \u2212100 to +100. Captures love-vs-hate balance.',
+        nps,
+        i => (i.score > 0 ? '+' : '') + i.score
+      )}
+
+      <div class="analysis-section">
+        <div class="section-header">
+          <div class="section-title">Polarization Spectrum</div>
+          <div class="section-method">Rating distribution for each brand. Higher std dev = more divisive\u2014people either love it or hate it.</div>
+        </div>
+        ${polarization.map(p => {
+          const colors = ['#c07a60', '#d4a574', '#c8bfb4', '#7bad8a', '#3d7554'];
+          return `
+            <div class="polar-row">
+              <div class="polar-brand">${NAMES[p.brand]}</div>
+              <div class="polar-spectrum">
+                ${p.dist.map((count, i) => `
+                  <div class="polar-seg" style="flex:${Math.max(count, 0.3)};background:${colors[i]}">${count > 0 ? count : ''}</div>
+                `).join('')}
+              </div>
+              <div class="polar-verdict">\u03C3 = ${p.sd.toFixed(2)}</div>
+            </div>
+          `;
+        }).join('')}
+        <div style="display:flex;justify-content:center;gap:1.5rem;margin-top:1rem;font-size:0.72rem;color:var(--text-muted)">
+          ${['1 \u2605','2 \u2605','3 \u2605','4 \u2605','5 \u2605'].map((l,i) => `
+            <span style="display:flex;align-items:center;gap:0.3rem">
+              <span style="width:10px;height:10px;border-radius:2px;background:${['#c07a60','#d4a574','#c8bfb4','#7bad8a','#3d7554'][i]}"></span>${l}
+            </span>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="analysis-section">
+        <div class="section-header">
+          <div class="section-title">Domain Preferences</div>
+          <div class="section-method">Which URL voters chose for each brand.</div>
+        </div>
+        ${domainResults.map(dr => {
+          const total = Object.values(dr.counts).reduce((a,b) => a+b, 0);
+          return `
+            <div class="domain-row">
+              <div class="domain-brand-label">${NAMES[dr.brand]}</div>
+              <div class="domain-bar">
+                ${dr.domains.map(d => {
+                  const c = dr.counts[d];
+                  const pct = total ? Math.round(c / total * 100) : 50;
+                  return `<div class="domain-seg" style="flex:${Math.max(c,0.5)}"><span>${d}</span> <span class="pct">${pct}%</span></div>`;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div class="analysis-section">
+        <div class="section-header">
+          <div class="section-title">Voter Comments</div>
+          <div class="section-method">${comments.length} of ${N} voters left feedback</div>
+        </div>
+        ${comments.map(c => `
+          <div class="comment-card">
+            <div class="comment-author">${esc(c.name)}</div>
+            <div class="comment-text">${esc(c.comment).replace(/\n/g, '<br>')}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="analysis-section">
+        <div class="section-header">
+          <div class="section-title">Method Scorecard</div>
+          <div class="section-method">How many of the 9 methods each brand wins outright.</div>
+        </div>
+        <div class="tally-strip">
+          ${BRANDS.map(b => `
+            <div class="tally-box ${b === overallWinner ? 'winner' : ''}">
+              <div class="num">${methodWins[b]}</div>
+              <div class="lbl">${NAMES[b]}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  </script>
+</body>
+</html>
